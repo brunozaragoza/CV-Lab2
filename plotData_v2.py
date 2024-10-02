@@ -158,12 +158,26 @@ def triangulation(p_1,x1,p_2,x2):
 def plot_epipolar_line(f_matrix,x_1,image_2,ax,colr):
     line= f_matrix@x_1
     x_axis_values= np.arange(0,image_2.shape[1],1)
-    y= -x_axis_values*line[0]-line[2]
-    print(line)
+    y= -(x_axis_values*line[0]+line[2])/line[0]
     ax.plot(x_axis_values,y,color=colr)
     
-    
-    
+def fundamental_matrix(T_w_c1,T_w_c2,K):
+    T=np.linalg.inv(T_w_c1)@T_w_c2
+    #compute epipolar 
+    R= T[:3,:3]
+    t=T[:-1,3]
+    t_=np.zeros((3,3))
+    t_[0,1]=-t[2]
+    t_[0,2]=t[1]
+    t_[1,0]=t[2]
+    t_[1,2]=-t[0]
+    t_[2,0]= -t[1]
+    t_[2,1]= t[0]
+    E=t_@R
+    #fundamental matrix
+    F=K.T@E@np.linalg.inv(K)
+    return F
+
 if __name__ == '__main__':
     np.set_printoptions(precision=4,linewidth=1024,suppress=True)
 
@@ -226,31 +240,45 @@ if __name__ == '__main__':
     #epipolar line test plot
     plt.figure(1)
     plt.imshow(img1, cmap='gray', vmin=0, vmax=255)
-    plt.plot(x1[0, 0], x1[1, 0],'rx', markersize=10, color="r")
-    plt.plot(x1[0, 1], x1[1, 1],'rx', markersize=10, color="b")
-    plt.plot(x1[0, 2], x1[1, 2],'rx', markersize=10, color="orange")
-    plt.plot(x1[0, 3], x1[1, 3],'rx', markersize=10, color= "g")
-    plt.title('Image 1')
-    plt.draw()  # We update the figure display
-    plt.waitforbuttonpress()
-    plt.figure(4)
-    plt.imshow(img2, cmap='gray', vmin=0, vmax=255)
     pt1= np.array([x1[0,0],x1[1,0],1.])
     pt2= np.array([x1[0,1],x1[1,1],1.])
     pt3= np.array([x1[0,2],x1[1,2],1.])
-    pt4= np.array([x1[0,3],x1[1,3],1.])
+    pt4= np.array([x1[0,10],x1[1,0],1.])
+    plt.plot(pt1[0], pt1[1],'rx', markersize=10, color="r")
+    plt.plot(pt2[0], pt2[1],'rx', markersize=10, color="b")
+    plt.plot(pt3[0], pt3[1],'rx', markersize=10, color="orange")
+    plt.plot(pt4[0], pt4[1],'rx', markersize=10, color= "g")
+    plt.title('Image 1')
+    plt.draw()  # We update the figure display
+    plt.waitforbuttonpress()
+    plt.figure(2)
+    plt.imshow(img2, cmap='gray', vmin=0, vmax=255)
     plot_epipolar_line(f_2_1_test,pt1,img2,plt,"r")
     plot_epipolar_line(f_2_1_test,pt2,img2,plt,"b")
     plot_epipolar_line(f_2_1_test,pt3,img2,plt,"orange")
     plot_epipolar_line(f_2_1_test,pt4,img2,plt,"g")
     
-    plt.title('Image 2')
+    plt.title('Epipolar lines')
     plt.draw()  # We update the figure display
     print('Click in the image to continue...')
     plt.waitforbuttonpress()
-   
-    # feature points
+    
+    #Fundamental matrix definition
+    F=fundamental_matrix(T_w_c1,T_w_c2,K_c)
     plt.figure(3)
+    plt.imshow(img2, cmap='gray', vmin=0, vmax=255)
+    plot_epipolar_line(F,pt1,img2,plt,"r")
+    plot_epipolar_line(F,pt2,img2,plt,"b")
+    plot_epipolar_line(F,pt3,img2,plt,"orange")
+    plot_epipolar_line(F,pt4,img2,plt,"g")
+    plt.title('Fundamental Matrix definition')
+    plt.draw()  # We update the figure display
+    print('Click in the image to continue...')
+    plt.waitforbuttonpress()
+    
+    
+    # feature points
+    plt.figure(4)
     plt.imshow(img1, cmap='gray', vmin=0, vmax=255)
     plt.plot(x1[0, :], x1[1, :],'rx', markersize=10)
     plotNumberedImagePoints(x1, 'r', (10,0)) # For plotting with numbers (choose one of the both options)
@@ -258,7 +286,7 @@ if __name__ == '__main__':
     plt.draw()  # We update the figure display
     print('Click in the image to continue...')
     plt.waitforbuttonpress()
-    plt.figure(4)
+    plt.figure(5)
     plt.imshow(img2, cmap='gray', vmin=0, vmax=255)
     plt.plot(x2[0, :], x2[1, :],'rx', markersize=10)
     plotNumberedImagePoints(x2, 'r', (10,0)) # For plotting with numbers (choose one of the both options)
