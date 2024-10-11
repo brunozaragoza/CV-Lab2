@@ -162,7 +162,7 @@ def plot_epipolar_line(f_matrix,x_1,image_2,ax,colr):
     ax.plot(x_axis_values,y,color=colr)
     
 def fundamental_matrix(T_w_c1,T_w_c2,K):
-    T=np.linalg.inv(T_w_c1)@T_w_c2
+    T=T_w_c2@np.linalg.inv(T_w_c1)
     #compute epipolar 
     R= T[:3,:3]
     t=T[:-1,3]
@@ -175,7 +175,7 @@ def fundamental_matrix(T_w_c1,T_w_c2,K):
     t_[2,1]= t[0]
     E=t_@R
     #fundamental matrix
-    F=K.T@E@np.linalg.inv(K)
+    F=np.linalg.inv(K).T@E@np.linalg.inv(K)
     return F
 
 if __name__ == '__main__':
@@ -263,7 +263,7 @@ if __name__ == '__main__':
     print('Click in the image to continue...')
     plt.waitforbuttonpress()
     
-    #Fundamental matrix definition
+    #Fundamental matrix definition(2.2)
     F=fundamental_matrix(T_w_c1,T_w_c2,K_c)
     plt.figure(3)
     plt.imshow(img2, cmap='gray', vmin=0, vmax=255)
@@ -275,10 +275,42 @@ if __name__ == '__main__':
     plt.draw()  # We update the figure display
     print('Click in the image to continue...')
     plt.waitforbuttonpress()
-    
+    #Fundamental matrix definition(2.3)
+    A= np.zeros((x1.shape[1],9))
+    for i in range(x1.shape[1]):
+        x1_=np.append(x1[:,i],[1])
+        x2_=np.append(x2[:,i],[1])
+        b= np.zeros((9,1))
+        b[0]=x1_[0]*x2_[0]
+        b[1]=x1_[1]*x2_[0]
+        b[2]=x1_[2]*x2_[0]
+        b[3]=x1_[0]*x2_[1]
+        b[4]=x1_[1]*x2_[1]
+        b[5]= x1_[2]*x2_[1] 
+        b[6]=x1_[0]*x2_[2]
+        b[7]=x1_[1]*x2_[2]
+        b[8]=x1_[2]*x2_[2]
+        A[i,:]= b.T[0]  
+    U,D,Vh= np.linalg.svd(A)
+    F=Vh[-1].reshape(3,3)
+    U_,S_,Vt_=np.linalg.svd(F)
+    S__=np.zeros((3,3))
+    S__[0,0]=S_[0]
+    S__[1,1]=S_[1]
+    F_=U_@S__@Vt_
+    plt.figure(4)
+    plt.imshow(img2, cmap='gray', vmin=0, vmax=255)
+    plot_epipolar_line(F_,pt1,img2,plt,"r")
+    plot_epipolar_line(F_,pt2,img2,plt,"b")
+    plot_epipolar_line(F_,pt3,img2,plt,"orange")
+    plot_epipolar_line(F_,pt4,img2,plt,"g")
+    plt.title('Fundamental Matrix 8 point sol')
+    plt.draw()  # We update the figure display
+    print('Click in the image to continue...')
+    plt.waitforbuttonpress()
     
     # feature points
-    plt.figure(4)
+    plt.figure(5)
     plt.imshow(img1, cmap='gray', vmin=0, vmax=255)
     plt.plot(x1[0, :], x1[1, :],'rx', markersize=10)
     plotNumberedImagePoints(x1, 'r', (10,0)) # For plotting with numbers (choose one of the both options)
@@ -286,7 +318,7 @@ if __name__ == '__main__':
     plt.draw()  # We update the figure display
     print('Click in the image to continue...')
     plt.waitforbuttonpress()
-    plt.figure(5)
+    plt.figure(6)
     plt.imshow(img2, cmap='gray', vmin=0, vmax=255)
     plt.plot(x2[0, :], x2[1, :],'rx', markersize=10)
     plotNumberedImagePoints(x2, 'r', (10,0)) # For plotting with numbers (choose one of the both options)
