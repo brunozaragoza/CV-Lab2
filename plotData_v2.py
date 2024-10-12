@@ -155,10 +155,10 @@ def triangulation(p_1,x1,p_2,x2):
         out[i]=x_3d[:-1]
     return out
 
-def plot_epipolar_line(f_matrix,x_1,image_2,ax,colr):
+def plot_epipolar_line(f_matrix,x_1,image_2,ax,colr,x_end=1000):
     line= f_matrix@x_1
-    x_axis_values= np.arange(0,image_2.shape[1],1)
-    y= -(x_axis_values*line[0]+line[2])/line[0]
+    x_axis_values= np.arange(0,x_end,1)
+    y= -(x_axis_values*line[0]+line[2])/line[1]
     ax.plot(x_axis_values,y,color=colr)
     
 def fundamental_matrix(T_w_c1,T_w_c2,K):
@@ -229,6 +229,11 @@ if __name__ == '__main__':
     #########Funddamental matrix and Structure from Motion########
     ##############################################################
 
+    
+    
+    ####################################
+    #Fundamental matrix definition(2.1)#
+    ####################################
     #Loading test fundamental matrix between image 2 and 1
     f_2_1_test= np.loadtxt("data/F_21_test.txt")
     
@@ -263,7 +268,9 @@ if __name__ == '__main__':
     print('Click in the image to continue...')
     plt.waitforbuttonpress()
     
-    #Fundamental matrix definition(2.2)
+    ####################################
+    #Fundamental matrix definition(2.2)#
+    ####################################
     F=fundamental_matrix(T_w_c1,T_w_c2,K_c)
     plt.figure(3)
     plt.imshow(img2, cmap='gray', vmin=0, vmax=255)
@@ -275,7 +282,9 @@ if __name__ == '__main__':
     plt.draw()  # We update the figure display
     print('Click in the image to continue...')
     plt.waitforbuttonpress()
-    #Fundamental matrix definition(2.3)
+    ####################################
+    #Fundamental matrix definition(2.3)#
+    ####################################
     A= np.zeros((x1.shape[1],9))
     for i in range(x1.shape[1]):
         x1_=np.append(x1[:,i],[1])
@@ -298,17 +307,27 @@ if __name__ == '__main__':
     S__[0,0]=S_[0]
     S__[1,1]=S_[1]
     F_=U_@S__@Vt_
+    #Compute epipole 
+    U__, DD, VTT= np.linalg.svd(F_.T)
+    e= VTT[-1]
+    e/=e[-1]
+    #plot epipole and epipolar lines
     plt.figure(4)
+    pt1= np.array([x1[0,0],x1[1,0],1.])
+    pt2= np.array([x1[0,1],x1[1,1],1.])
+    pt3= np.array([x1[0,20],x1[1,20],1.])
+    pt4= np.array([x1[0,10],x1[1,0],1.])
     plt.imshow(img2, cmap='gray', vmin=0, vmax=255)
-    plot_epipolar_line(F_,pt1,img2,plt,"r")
-    plot_epipolar_line(F_,pt2,img2,plt,"b")
-    plot_epipolar_line(F_,pt3,img2,plt,"orange")
-    plot_epipolar_line(F_,pt4,img2,plt,"g")
+    plot_epipolar_line(F_,pt1,img2,plt,"r",e[0])
+    plot_epipolar_line(F_,pt2,img2,plt,"b",e[0])
+    plot_epipolar_line(F_,pt3,img2,plt,"orange",e[0])
+    plot_epipolar_line(F_,pt4,img2,plt,"g",e[0])
+    
     plt.title('Fundamental Matrix 8 point sol')
+    plt.scatter(e[0],e[1])
     plt.draw()  # We update the figure display
     print('Click in the image to continue...')
     plt.waitforbuttonpress()
-    
     # feature points
     plt.figure(5)
     plt.imshow(img1, cmap='gray', vmin=0, vmax=255)
