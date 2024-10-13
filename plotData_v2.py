@@ -177,12 +177,16 @@ def fundamental_matrix(T_w_c1,T_w_c2,K):
     #fundamental matrix
     F=np.linalg.inv(K).T@E@np.linalg.inv(K)
     return F
-def translation(t_):
-    T=np.zeros((3,1))
-    T[2]=-t_[0,1]
-    T[0]=-t_[1,2]
-    T[1]=t_[0,2]
-    return T
+def rotation(U,V,W):
+    R1=U@W@V 
+    R2=U@W.T@V
+    
+    if np.linalg.det(R1)<0:
+        R1=-R1
+    if np.linalg.det(R2)<0:
+        R2=-R2
+    return R1,R2
+
 if __name__ == '__main__':
     np.set_printoptions(precision=4,linewidth=1024,suppress=True)
 
@@ -337,7 +341,7 @@ if __name__ == '__main__':
     #Fundamental matrix definition(2.4)#
     ####################################
     #compute epipolar matrix
-    E_2_1=K_c.T@F_.T@K_c  
+    E_2_1=K_c.T@F_@K_c  
     #compute 4 potential transforms from Epipolar matrix
     U,S,V= np.linalg.svd(E_2_1)
     W=np.zeros((3,3))
@@ -346,18 +350,16 @@ if __name__ == '__main__':
     W[2,2]=1
     S=np.identity(3)
     S[2,2]=0
-    R=U@W@V 
+    R_90, R_90_min=rotation(U,V,W)
+    #solution 1
     t=U[:,-1]
-    T_21_1=ensamble_T(R,t)
-    R=(-1)*U@W@V
-    t=-U[:,-1]
-    T_21_2=ensamble_T(R,t)
-    R=U@W.T@V
-    t=U[:,-1]
-    T_21_3=ensamble_T(R,t)
-    R=(-1)*U@W.T@V
-    t=-U[:,-1]
-    T_21_4=ensamble_T(R,t)  
+    T_21_1=ensamble_T(R_90,t)
+    #solution 2
+    T_21_2=ensamble_T(R_90,-t)
+    #solution 3
+    T_21_3=ensamble_T(R_90_min,t)
+    #solution 4
+    T_21_4=ensamble_T(R_90_min,-t)  
     #projection matrix 1    
     T_1= np.zeros((4,4))
     T_1[0,0]=1
@@ -374,25 +376,17 @@ if __name__ == '__main__':
     sol3_3dpoints=triangulation(P_1,x1,P2,x2)
     P2= P(T_21_4,K_c)
     sol4_3dpoints=triangulation(P_1,x1,P2,x2)
-    #plot solutions
-    ax = plt.axes(projection='3d', adjustable='box')
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-
-    drawRefSystem(ax, np.eye(4, 4), '-', 'C1')
-    drawRefSystem(ax, T_21_1, '-', 'C2')
-
-    ax.scatter(sol2_3dpoints[:,0], sol2_3dpoints[:,1], sol2_3dpoints[:,2], marker='+', label="Our Sol")
-    ax.legend()
-    #plotNumbered3DPoints(ax, X_w, 'r', (0.1, 0.1, 0.1)) # For plotting with numbers (choose one of the both options)
-    xFakeBoundingBox = np.linspace(0, 4, 2)
-    yFakeBoundingBox = np.linspace(0, 4, 2)
-    zFakeBoundingBox = np.linspace(0, 4, 2)
-    plt.plot(xFakeBoundingBox, yFakeBoundingBox, zFakeBoundingBox, 'w.')
-    print('Close the figure to continue. Left button for orbit, right button for zoom.')
-    plt.show()   
+    print("Rotation Camera Pose SOlution",R_90_min)    
+    print("Translation Camera Pose SOlution",t)    
+    ####################################
+    #Fundamental matrix definition(2.5)#
+    ####################################
+    
+    
+    
+    
     # feature points
+    #plotNumbered3DPoints(ax, X_w, 'r', (0.1, 0.1, 0.1)) # For plotting with numbers (choose one of the both options)
     plt.figure(5)
     plt.imshow(img1, cmap='gray', vmin=0, vmax=255)
     plt.plot(x1[0, :], x1[1, :],'rx', markersize=10)
