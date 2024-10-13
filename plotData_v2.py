@@ -237,8 +237,6 @@ if __name__ == '__main__':
     ##############################################################
     #########Funddamental matrix and Structure from Motion########
     ##############################################################
-
-    
     
     ####################################
     #Fundamental matrix definition(2.1)#
@@ -376,13 +374,38 @@ if __name__ == '__main__':
     sol3_3dpoints=triangulation(P_1,x1,P2,x2)
     P2= P(T_21_4,K_c)
     sol4_3dpoints=triangulation(P_1,x1,P2,x2)
+    print("Exercise 2.4")
     print("Rotation Camera Pose SOlution",R_90_min)    
     print("Translation Camera Pose SOlution",t)    
     ####################################
     #Fundamental matrix definition(2.5)#
     ####################################
+    ax = plt.axes(projection='3d', adjustable='box')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+
+    drawRefSystem(ax, np.eye(4, 4), '-', 'W')
+    drawRefSystem(ax, T_w_c1, '-', 'C1')
+    drawRefSystem(ax, T_w_c2, '-', 'C2')
+    pts_sol =np.zeros((sol3_3dpoints.shape[0],sol3_3dpoints.shape[1]))
     
-    
+    for i in range(pts_sol.shape[0]):
+        pt= (R_90_min@sol3_3dpoints[i,:])+t
+        pt=np.append(pt,[1])
+        pt=T_w_c1@pt
+        pts_sol[i]=pt[:3]
+    ax.scatter(X_w[0, :], X_w[1, :], X_w[2, :], marker='.',  label="Ground Truth")
+    ax.scatter(pts_sol[:,0], pts_sol[:,1], pts_sol[:,2], marker='+', label="Our Sol")
+    ax.legend()
+    #plotNumbered3DPoints(ax, X_w, 'r', (0.1, 0.1, 0.1)) # For plotting with numbers (choose one of the both options)
+    xFakeBoundingBox = np.linspace(0, 4, 2)
+    yFakeBoundingBox = np.linspace(0, 4, 2)
+    zFakeBoundingBox = np.linspace(0, 4, 2)
+    plt.plot(xFakeBoundingBox, yFakeBoundingBox, zFakeBoundingBox, 'w.')
+    print('Close the figure to continue. Left button for orbit, right button for zoom.')
+    plt.draw()   
+    plt.waitforbuttonpress()
     
     
     # feature points
