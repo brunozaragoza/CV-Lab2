@@ -149,7 +149,7 @@ def triangulation(p_1,x1,p_2,x2):
         #compute matrix A
         A= np.vstack((eqs_c1,eq_c2))
         #SVD 
-        U, S, Vh= np.linalg.svd(A,full_matrices=True)
+        U, S, Vh= np.linalg.svd(A)
         x_3d=Vh[-1]
         x_3d=x_3d/x_3d[-1]
         out[i]=x_3d[:-1]
@@ -186,6 +186,17 @@ def rotation(U,V,W):
     if np.linalg.det(R2)<0:
         R2=-R2
     return R1,R2
+
+def check_points_front_camera(T_21,x_c1):
+    ct=0
+    for i in range(x_c1.shape[0]):
+        x_c2= T_21@np.append(x_c1[i],[1])
+        if(x_c1[i,2]>0 and x_c2[2]>0):
+            ct+=1
+            
+    return ct 
+    
+
 
 if __name__ == '__main__':
     np.set_printoptions(precision=4,linewidth=1024,suppress=True)
@@ -346,8 +357,6 @@ if __name__ == '__main__':
     W[0,1]=-1
     W[1,0]=1
     W[2,2]=1
-    S=np.identity(3)
-    S[2,2]=0
     R_90, R_90_min=rotation(U,V,W)
     #solution 1
     t=U[:,-1]
@@ -364,22 +373,28 @@ if __name__ == '__main__':
     T_1[1,1]=1
     T_1[2,2]=1
     T_1[3,3]=1
+    print(T_1)
     P_1= P(T_1,K_c)
     #projection matrices 2
     P2= P(T_21_1,K_c)
     sol1_3dpoints=triangulation(P_1,x1,P2,x2)
+    print("SOL1 Nb of points",check_points_front_camera(T_21_1,sol1_3dpoints))
     P2= P(T_21_2,K_c)
     sol2_3dpoints=triangulation(P_1,x1,P2,x2)
+    print("SOL2 Nb of points",check_points_front_camera(T_21_2,sol2_3dpoints))
     P2= P(T_21_3,K_c)
     sol3_3dpoints=triangulation(P_1,x1,P2,x2)
+    print("SOL3 Nb of points",check_points_front_camera(T_21_3,sol3_3dpoints))
     P2= P(T_21_4,K_c)
     sol4_3dpoints=triangulation(P_1,x1,P2,x2)
+    print("SOL4 Nb of points",check_points_front_camera(T_21_4,sol4_3dpoints))
     print("Exercise 2.4")
     print("Rotation Camera Pose SOlution",R_90_min)    
     print("Translation Camera Pose SOlution",t)    
     ####################################
     #Fundamental matrix definition(2.5)#
     ####################################
+    print("Exercise 2.5")
     ax = plt.axes(projection='3d', adjustable='box')
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
@@ -398,7 +413,6 @@ if __name__ == '__main__':
     ax.scatter(X_w[0, :], X_w[1, :], X_w[2, :], marker='.',  label="Ground Truth")
     ax.scatter(pts_sol[:,0], pts_sol[:,1], pts_sol[:,2], marker='+', label="Our Sol")
     ax.legend()
-    #plotNumbered3DPoints(ax, X_w, 'r', (0.1, 0.1, 0.1)) # For plotting with numbers (choose one of the both options)
     xFakeBoundingBox = np.linspace(0, 4, 2)
     yFakeBoundingBox = np.linspace(0, 4, 2)
     zFakeBoundingBox = np.linspace(0, 4, 2)
@@ -407,9 +421,8 @@ if __name__ == '__main__':
     plt.draw()   
     plt.waitforbuttonpress()
     
-    
     # feature points
-    #plotNumbered3DPoints(ax, X_w, 'r', (0.1, 0.1, 0.1)) # For plotting with numbers (choose one of the both options)
+        
     plt.figure(5)
     plt.imshow(img1, cmap='gray', vmin=0, vmax=255)
     plt.plot(x1[0, :], x1[1, :],'rx', markersize=10)
