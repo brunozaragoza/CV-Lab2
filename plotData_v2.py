@@ -195,8 +195,44 @@ def check_points_front_camera(T_21,x_c1):
             ct+=1
             
     return ct 
-    
 
+#average distance between ground truth and  generated points    
+def distance_pts(x_1,x_2):
+    # Compute the pairwise distances between all points in set1 and set2
+    distances = np.linalg.norm(x_1[:, np.newaxis] - x_2, axis=2)
+    # Calculate the average distance
+    average_distance = np.mean(distances)
+    return average_distance
+   
+#compute homography matrix
+
+def homography_matrix(x1,x2):
+    A= np.ones((2*x1.shape[1],9))
+    row=0
+    for i in range(x1.shape[1]):
+        x_1= x1[0,i]
+        y_1= x1[1,i]
+        x_2= x2[0,i]
+        y_2= x2[1,i]
+        line1=[x_1,y_1,1,0,0,0,-x_1*x_2,-x_2*y_1,-x_2]
+        line2=[0,0,0,x_1,y_1,1,-x_1*y_2,-y_2*y_1,-y_2]    
+        A[row]=np.array(line1)
+        row+=1
+        A[row]=np.array(line2)
+        row+=1
+        
+    u,S,Vt= np.linalg.svd(A)
+    H= Vt[-1]
+    H=H.reshape((3,3))
+    return H
+
+#compute point transfer 
+def point_transfer(H,x1):
+    pts=np.zeros((2,x1.shape[1]))
+    for i in range(x1.shape[1]):
+        pt=H@x1[:,i]
+        pts[:,i]=pt[:2]/pt[-1]
+    return pts
 
 if __name__ == '__main__':
     np.set_printoptions(precision=4,linewidth=1024,suppress=True)
@@ -213,6 +249,11 @@ if __name__ == '__main__':
     x1 = np.loadtxt('data/x1Data.txt')
     #camera 2 image points
     x2 = np.loadtxt('data/x2Data.txt')
+    #image1 points floor 
+    x1floor= np.loadtxt("data/x1FloorData.txt")
+    #image2 points floor 
+    x2floor= np.loadtxt("data/x2FloorData.txt")
+    
     #########################################
     ############## Triangulation ############
     #########################################
@@ -406,8 +447,7 @@ if __name__ == '__main__':
     pts_sol =np.zeros((sol3_3dpoints.shape[0],sol3_3dpoints.shape[1]))
     
     for i in range(pts_sol.shape[0]):
-        pt= (R_90_min@sol3_3dpoints[i,:])+t
-        pt=np.append(pt,[1])
+        pt=np.append(sol3_3dpoints[i],1)
         pt=T_w_c1@pt
         pts_sol[i]=pt[:3]
     ax.scatter(X_w[0, :], X_w[1, :], X_w[2, :], marker='.',  label="Ground Truth")
@@ -420,9 +460,33 @@ if __name__ == '__main__':
     print('Close the figure to continue. Left button for orbit, right button for zoom.')
     plt.draw()   
     plt.waitforbuttonpress()
+    print("Average distance between ground truth and our pts:",distance_pts(X_w.T[:,:3],pts_sol))
     
+    
+    ####################################
+    ##############Homographies(3)#######
+    ####################################
+    
+    ####################################
+    #Homographies(3.3)##################
+    ####################################
+    #homography_matrix
+    H=homography_matrix(x1floor,x2floor)
+    print("Exercise 3.3")
+    print("H=",H)    
+    ####################################
+    #Homographies(3.1)##################
+    ####################################
+    d=1.7257
+    n=np.array([0.0149,0.9483,0.3171])
+    H=K_c@(R_90_min-t@n.T*(1./d))@np.linalg.inv(K_c)
+    print("Exercise 3.1")
+    print("H=",H)
+    ####################################
+    #Homographies(3.2)##################
+    ####################################
+    x1_=point_transfer(H,x1floor)
     # feature points
-        
     plt.figure(5)
     plt.imshow(img1, cmap='gray', vmin=0, vmax=255)
     plt.plot(x1[0, :], x1[1, :],'rx', markersize=10)
@@ -435,6 +499,8 @@ if __name__ == '__main__':
     plt.imshow(img2, cmap='gray', vmin=0, vmax=255)
     plt.plot(x2[0, :], x2[1, :],'rx', markersize=10)
     plotNumberedImagePoints(x2, 'r', (10,0)) # For plotting with numbers (choose one of the both options)
+    plotNumberedImagePoints(x1_, 'g', (10,0))
+    plt.plot(x1_[0, :], x1_[1, :],'gx', markersize=10)
     plt.title('Image 2')
     plt.draw()  # We update the figure display
     print('Click in the image to continue...')
