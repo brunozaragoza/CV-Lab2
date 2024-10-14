@@ -323,7 +323,7 @@ if __name__ == '__main__':
     plot_epipolar_line(f_2_1_test,pt3,img2,plt,"orange")
     plot_epipolar_line(f_2_1_test,pt4,img2,plt,"g")
     
-    plt.title('Epipolar lines')
+    plt.title('Epipolar lines Test')
     plt.draw()  # We update the figure display
     print('Click in the image to continue...')
     plt.waitforbuttonpress()
@@ -341,6 +341,8 @@ if __name__ == '__main__':
     plt.title('Fundamental Matrix definition')
     plt.draw()  # We update the figure display
     print('Click in the image to continue...')
+    print("Exercise 2.2")
+    print("F=",F)
     plt.waitforbuttonpress()
     ####################################
     #Fundamental matrix definition(2.3)#
@@ -383,7 +385,7 @@ if __name__ == '__main__':
     plot_epipolar_line(F_,pt3,img2,plt,"orange",e[0])
     plot_epipolar_line(F_,pt4,img2,plt,"g",e[0])
     
-    plt.title('Fundamental Matrix 8 point sol')
+    plt.title('Fundamental Matrix 8 point sol, epipolar line and epipole')
     plt.scatter(e[0],e[1])
     plt.draw()  # We update the figure display
     print('Click in the image to continue...')
@@ -420,16 +422,16 @@ if __name__ == '__main__':
     #projection matrices 2
     P2= P(T_21_1,K_c)
     sol1_3dpoints=triangulation(P_1,x1,P2,x2)
-    print("SOL1 Nb of points",check_points_front_camera(T_21_1,sol1_3dpoints))
+    print("SOL1 Nb of points in front of camera:",check_points_front_camera(T_21_1,sol1_3dpoints))
     P2= P(T_21_2,K_c)
     sol2_3dpoints=triangulation(P_1,x1,P2,x2)
-    print("SOL2 Nb of points",check_points_front_camera(T_21_2,sol2_3dpoints))
+    print("SOL2 Nb of points in front of camera:",check_points_front_camera(T_21_2,sol2_3dpoints))
     P2= P(T_21_3,K_c)
     sol3_3dpoints=triangulation(P_1,x1,P2,x2)
-    print("SOL3 Nb of points",check_points_front_camera(T_21_3,sol3_3dpoints))
+    print("SOL3 Nb of points in front of camera:",check_points_front_camera(T_21_3,sol3_3dpoints))
     P2= P(T_21_4,K_c)
     sol4_3dpoints=triangulation(P_1,x1,P2,x2)
-    print("SOL4 Nb of points",check_points_front_camera(T_21_4,sol4_3dpoints))
+    print("SOL4 Nb of points in front of camera:",check_points_front_camera(T_21_4,sol4_3dpoints))
     print("Exercise 2.4")
     print("Rotation Camera Pose SOlution",R_90_min)    
     print("Translation Camera Pose SOlution",t)    
@@ -472,9 +474,9 @@ if __name__ == '__main__':
     #Homographies(3.3)##################
     ####################################
     #homography_matrix
-    H=homography_matrix(x1floor,x2floor)
+    H_=homography_matrix(x1floor,x2floor)
     print("Exercise 3.3")
-    print("H=",H)    
+    print("H=",H_)    
     ####################################
     #Homographies(3.1)##################
     ####################################
@@ -482,14 +484,12 @@ if __name__ == '__main__':
     d=Pi_1[3]
     n=Pi_1[:3]
     H=K_c@(R_90_min-(t[:,np.newaxis]@n[:,np.newaxis].T)*(1./d))@np.linalg.inv(K_c)
-    
     print("Exercise 3.1")
     print("H=",H)
     ####################################
     #Homographies(3.2)##################
     ####################################
     x1_=point_transfer(H,x1floor)
-    # feature points
     plt.figure(5)
     plt.imshow(img1, cmap='gray', vmin=0, vmax=255)
     plt.plot(x1[0, :], x1[1, :],'rx', markersize=10)
@@ -503,8 +503,12 @@ if __name__ == '__main__':
     plt.plot(x2[0, :], x2[1, :],'rx', markersize=10)
     plotNumberedImagePoints(x2, 'r', (10,0)) # For plotting with numbers (choose one of the both options)
     plotNumberedImagePoints(x1_, 'g', (10,0))
-    plt.plot(x1_[:,0], x1_[ :,1],'gx', markersize=10)
+    plt.plot(x1_[:,0], x1_[ :,1],'gx', markersize=10, label="ground floor point transfer using 3.1 H matrix")
+    x1_=point_transfer(H_,x1floor)
+    plt.plot(x1_[:,0], x1_[ :,1],'bx', markersize=10, label="ground floor point transfer using 3.3 H matrix")
+    
     plt.title('Image 2')
+    plt.legend(loc="upper right")
     plt.draw()  # We update the figure display
     print('Click in the image to continue...')
     plt.waitforbuttonpress()
