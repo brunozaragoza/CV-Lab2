@@ -490,17 +490,7 @@ if __name__ == '__main__':
     ##############Homographies(3)#######
     ####################################
     
-    ####################################
-    #Homographies(3.3)##################
-    ####################################
-    #homography_matrix
-    H_=homography_matrix(x1floor,x2floor)
-    print("Exercise 3.3")
-    print("H=",H_)
-    x1_=point_transfer(H_,x1floor) 
-    #Metric: Compute the distance of x2 points closest to ground floor points transfer
-    dist=average_distance_closest_point(x2.T,x1_)
-    print("Distance metric Evaluation:",dist)
+
     ####################################
     #Homographies(3.1)##################
     ####################################
@@ -528,6 +518,17 @@ if __name__ == '__main__':
     plotNumberedImagePoints(x2, 'r', (10,0)) # For plotting with numbers (choose one of the both options)
     plotNumberedImagePoints(x1_, 'g', (10,0))
     plt.plot(x1_[:,0], x1_[ :,1],'gx', markersize=10, label="ground floor point transfer using 3.1 H matrix")
+    ####################################
+    #Homographies(3.3)##################
+    ####################################
+    #homography_matrix
+    H_=homography_matrix(x1floor,x2floor)
+    print("Exercise 3.3")
+    print("H=",H_)
+    x1_=point_transfer(H_,x1floor) 
+    #Metric: Compute the distance of x2 points closest to ground floor points transfer
+    dist=average_distance_closest_point(x2.T,x1_)
+    print("Distance metric Evaluation:",dist)
     x1_=point_transfer(H_,x1floor)
     plt.plot(x1_[:,0], x1_[ :,1],'bx', markersize=10, label="ground floor point transfer using 3.3 H matrix")
     
