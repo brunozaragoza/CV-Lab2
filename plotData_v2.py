@@ -115,14 +115,30 @@ def drawRefSystem(ax, T_w_c, strStyle, nameStr):
     ax.text(np.squeeze( T_w_c[0, 3]+0.1), np.squeeze( T_w_c[1, 3]+0.1), np.squeeze( T_w_c[2, 3]+0.1), nameStr)
 
 
-# projection matrix computation
 def P(T,K):
+    """
+    Projection matrix computation
+    -input:
+        T: transform matrix
+        K: intrinsic calibration matrix.
+    -output:
+        Projection matrix
+    """
     canonical_mat= np.identity(3)
     canonical_mat= np.hstack((canonical_mat,np.array([0,0,0]).reshape(3,1)))
     return K@canonical_mat@T
 
-# equations for computing triangulation
 def pair_equations_camera(x,y,p):
+        """
+    Pair of equations to compute constraint to a pair of points as intermediate step in triangulation
+    -input:
+        x: points x-axis coordinates
+        y: points y-axis coordinates
+        p: projection
+    -output:
+        equation pair
+        """
+    
         A= p[2,0]*x-p[0,0]
         B =p[2,1]*x-p[0,1]
         C= p[2,2]*x-p[0,2]
@@ -135,8 +151,15 @@ def pair_equations_camera(x,y,p):
         line2= np.array([E,F,G,H])
         return np.vstack((line1,line2))
 
-#Triangulation to obtain 3D world points from two images
 def triangulation(p_1,x1,p_2,x2):
+    """
+        Triangulation to obtain 3D world points from two images
+    -input:
+        p_1: projection matrix for camera 1
+        x1: image points on image 1
+        p_2: projection matrix for camera 2
+        x_2: points on image 2.
+    """
     out= np.ones((x1.shape[1],3))
     for i in range(x1.shape[1]):
         #camera 1 equation
@@ -155,14 +178,31 @@ def triangulation(p_1,x1,p_2,x2):
         x_3d=x_3d/x_3d[-1]
         out[i]=x_3d[:-1]
     return out
-#plot epipolar lines
+
 def plot_epipolar_line(f_matrix,x_1,image_2,ax,colr,x_end=1000):
+    """
+        Plot epipolar lines
+         -input:
+             ax: axis handle
+             f_matrix: F matrix.
+             colr: Color of the text.
+             x_1: points from image 1.
+             image_2: image 2
+         -output: None
+         """
     line= f_matrix@x_1
     x_axis_values= np.arange(0,x_end,1)
     y= -(x_axis_values*line[0]+line[2])/line[1]
     ax.plot(x_axis_values,y,color=colr)
-#Computing fundamental matrix using Transforms   
 def fundamental_matrix(T_w_c1,T_w_c2,K):
+    """
+    Computing fundamental matrix using Transforms 
+    -input:
+        T_w_c1: transform from world frame to camera 1
+        T_w_c2: transform from world frame to camera 2
+        K: intrinsics calibration matrix
+        lWidth: Line width.
+    """
     T=T_w_c2@np.linalg.inv(T_w_c1)
     #compute epipolar 
     R= T[:3,:3]
@@ -180,6 +220,15 @@ def fundamental_matrix(T_w_c1,T_w_c2,K):
     return F
 #Rotation matrix recover from Epipolar matrix
 def rotation(U,V,W):
+    """
+    Rotation matrix recover from Epipolar matrix
+    -input:
+        U: U matrix from svd of epipolar matrix E
+        V: V matrix from svd of epipolar matrix E
+        W: rotation matrix  for rotation around z axis
+    - output 
+        rotation from epipolar matrices
+    """
     R1=U@W@V 
     R2=U@W.T@V
     
@@ -188,8 +237,16 @@ def rotation(U,V,W):
     if np.linalg.det(R2)<0:
         R2=-R2
     return R1,R2
-#Check for the 4 solutions from recovering the Rotation and T from epipolar matrix which one has points ahead of camera
+
 def check_points_front_camera(T_21,x_c1):
+    """
+    Check for the 4 solutions from recovering the Rotation and T from epipolar matrix which one has points ahead of camera
+    -input:
+        T_21: Transform between two cameras
+        x_c1: 3D points from camera1 
+    - output 
+        number of points ahead of camera for a given solution
+    """
     ct=0
     for i in range(x_c1.shape[0]):
         x_c2= T_21@np.append(x_c1[i],[1])
@@ -198,16 +255,30 @@ def check_points_front_camera(T_21,x_c1):
             
     return ct 
 
-#average distance between ground truth and  generated points    
 def distance_pts(x_1,x_2):
+    """
+    average distance between ground truth and  generated points
+    -input:
+        x_1: points set 1
+        x_2: points set 2 
+    - output 
+        average distance between points
+    """
     # Compute the pairwise distances between all points in set1 and set2
     distances = np.linalg.norm(x_1[:, np.newaxis] - x_2, axis=2)
     # Calculate the average distance
     average_distance = np.mean(distances)
     return average_distance
    
-#compute homography matrix
 def homography_matrix(x1,x2):
+    """
+    compute homography matrix using ground plane points on image 1 and image 2
+    -input:
+        x1: floor points on image 1
+        x2: floor points on image 2 
+    - output 
+        Homography matrix
+    """
     A= np.ones((2*x1.shape[1],9))
     row=0
     for i in range(x1.shape[1]):
@@ -227,16 +298,30 @@ def homography_matrix(x1,x2):
     H=H.reshape((3,3))
     return H
 
-#compute point transfer 
 def point_transfer(H,x1):
+    """
+    compute point transfer to image 2
+    -input:
+        H: homography matrix between image 1 and image 2
+        x1: floor points on image 1 
+    - output 
+        Points transfered
+    """
     pts=np.zeros((x1.shape[1],2))
     for i in range(x1.shape[1]):
         pt=H@x1[:,i]
         pts[i]=pt[:2]/pt[-1]
     return pts
 
-#metrix to evaluate accuracy of homograpgy
 def closest(points, new_point):
+    """
+    Find closeste point to a set of points
+    -input:
+        points: all image feature ones
+        new_point: one point on the floor 
+    - output 
+        closest point
+    """
     closest_point = None
     closest_distance = None
     for point in points:
@@ -246,8 +331,16 @@ def closest(points, new_point):
             closest_distance = distance
     return closest_point
 
-# Compute the floor points obtained average distance to the closest feature points in all image
+# 
 def average_distance_closest_point(x1,x1_ground_pt):
+    """
+    metric to evaluate homography accuracy
+    -input:
+        x1: all image feature ones
+        x1_ground_pt: points on the floor 
+    - output 
+        average distance between ground points and closest feature points on image 2
+    """
     n_pts= x1_ground_pt.shape[1]
     d=0
     for i in range(x1_ground_pt.shape[1]):
@@ -255,6 +348,7 @@ def average_distance_closest_point(x1,x1_ground_pt):
         closes_pt=closest(x1,pt)
         d+=np.linalg.norm(closes_pt-pt)
     return d/n_pts*1.
+
 if __name__ == '__main__':
     np.set_printoptions(precision=4,linewidth=1024,suppress=True)
 
