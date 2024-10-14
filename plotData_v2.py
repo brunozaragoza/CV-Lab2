@@ -422,7 +422,7 @@ if __name__ == '__main__':
     pt1= np.array([x1[0,0],x1[1,0],1.])
     pt2= np.array([x1[0,1],x1[1,1],1.])
     pt3= np.array([x1[0,2],x1[1,2],1.])
-    pt4= np.array([x1[0,10],x1[1,0],1.])
+    pt4= np.array([x1[0,10],x1[1,10],1.])
     plt.plot(pt1[0], pt1[1],'rx', markersize=10, color="r")
     plt.plot(pt2[0], pt2[1],'rx', markersize=10, color="b")
     plt.plot(pt3[0], pt3[1],'rx', markersize=10, color="orange")
@@ -489,10 +489,6 @@ if __name__ == '__main__':
     e/=e[-1]
     #plot epipole and epipolar lines
     plt.figure(4)
-    pt1= np.array([x1[0,0],x1[1,0],1.])
-    pt2= np.array([x1[0,1],x1[1,1],1.])
-    pt3= np.array([x1[0,20],x1[1,20],1.])
-    pt4= np.array([x1[0,10],x1[1,0],1.])
     plt.imshow(img2, cmap='gray', vmin=0, vmax=255)
     plot_epipolar_line(F_,pt1,img2,plt,"r",e[0])
     plot_epipolar_line(F_,pt2,img2,plt,"b",e[0])
