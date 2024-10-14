@@ -115,12 +115,13 @@ def drawRefSystem(ax, T_w_c, strStyle, nameStr):
     ax.text(np.squeeze( T_w_c[0, 3]+0.1), np.squeeze( T_w_c[1, 3]+0.1), np.squeeze( T_w_c[2, 3]+0.1), nameStr)
 
 
-
+# projection matrix computation
 def P(T,K):
     canonical_mat= np.identity(3)
     canonical_mat= np.hstack((canonical_mat,np.array([0,0,0]).reshape(3,1)))
     return K@canonical_mat@T
 
+# equations for computing triangulation
 def pair_equations_camera(x,y,p):
         A= p[2,0]*x-p[0,0]
         B =p[2,1]*x-p[0,1]
@@ -134,7 +135,7 @@ def pair_equations_camera(x,y,p):
         line2= np.array([E,F,G,H])
         return np.vstack((line1,line2))
 
-
+#Triangulation to obtain 3D world points from two images
 def triangulation(p_1,x1,p_2,x2):
     out= np.ones((x1.shape[1],3))
     for i in range(x1.shape[1]):
@@ -154,13 +155,13 @@ def triangulation(p_1,x1,p_2,x2):
         x_3d=x_3d/x_3d[-1]
         out[i]=x_3d[:-1]
     return out
-
+#plot epipolar lines
 def plot_epipolar_line(f_matrix,x_1,image_2,ax,colr,x_end=1000):
     line= f_matrix@x_1
     x_axis_values= np.arange(0,x_end,1)
     y= -(x_axis_values*line[0]+line[2])/line[1]
     ax.plot(x_axis_values,y,color=colr)
-    
+#Computing fundamental matrix using Transforms   
 def fundamental_matrix(T_w_c1,T_w_c2,K):
     T=T_w_c2@np.linalg.inv(T_w_c1)
     #compute epipolar 
@@ -177,6 +178,7 @@ def fundamental_matrix(T_w_c1,T_w_c2,K):
     #fundamental matrix
     F=np.linalg.inv(K).T@E@np.linalg.inv(K)
     return F
+#Rotation matrix recover from Epipolar matrix
 def rotation(U,V,W):
     R1=U@W@V 
     R2=U@W.T@V
@@ -186,7 +188,7 @@ def rotation(U,V,W):
     if np.linalg.det(R2)<0:
         R2=-R2
     return R1,R2
-
+#Check for the 4 solutions from recovering the Rotation and T from epipolar matrix which one has points ahead of camera
 def check_points_front_camera(T_21,x_c1):
     ct=0
     for i in range(x_c1.shape[0]):
@@ -205,7 +207,6 @@ def distance_pts(x_1,x_2):
     return average_distance
    
 #compute homography matrix
-
 def homography_matrix(x1,x2):
     A= np.ones((2*x1.shape[1],9))
     row=0
@@ -232,9 +233,28 @@ def point_transfer(H,x1):
     for i in range(x1.shape[1]):
         pt=H@x1[:,i]
         pts[i]=pt[:2]/pt[-1]
-    print(pts)
     return pts
 
+#metrix to evaluate accuracy of homograpgy
+def closest(points, new_point):
+    closest_point = None
+    closest_distance = None
+    for point in points:
+        distance = ((point[0] - new_point[0])**2 + (point[1] - new_point[1])**2)**0.5
+        if closest_distance is None or distance < closest_distance:
+            closest_point = point
+            closest_distance = distance
+    return closest_point
+
+# Compute the floor points obtained average distance to the closest feature points in all image
+def average_distance_closest_point(x1,x1_ground_pt):
+    n_pts= x1_ground_pt.shape[1]
+    d=0
+    for i in range(x1_ground_pt.shape[1]):
+        pt=x1_ground_pt[i]    
+        closes_pt=closest(x1,pt)
+        d+=np.linalg.norm(closes_pt-pt)
+    return d/(x1_ground_pt.shape[1])
 if __name__ == '__main__':
     np.set_printoptions(precision=4,linewidth=1024,suppress=True)
 
@@ -476,7 +496,11 @@ if __name__ == '__main__':
     #homography_matrix
     H_=homography_matrix(x1floor,x2floor)
     print("Exercise 3.3")
-    print("H=",H_)    
+    print("H=",H_)
+    x1_=point_transfer(H_,x1floor) 
+    #Metric: Compute the distance of x2 points closest to ground floor points transfer
+    dist=average_distance_closest_point(x2.T,x1_)
+    print("Distance metric Evaluation:",dist)
     ####################################
     #Homographies(3.1)##################
     ####################################
