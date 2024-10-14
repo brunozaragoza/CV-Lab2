@@ -254,7 +254,7 @@ def average_distance_closest_point(x1,x1_ground_pt):
         pt=x1_ground_pt[i]    
         closes_pt=closest(x1,pt)
         d+=np.linalg.norm(closes_pt-pt)
-    return d/(x1_ground_pt.shape[1])
+    return d/n_pts*1.
 if __name__ == '__main__':
     np.set_printoptions(precision=4,linewidth=1024,suppress=True)
 
@@ -437,7 +437,6 @@ if __name__ == '__main__':
     T_1[1,1]=1
     T_1[2,2]=1
     T_1[3,3]=1
-    print(T_1)
     P_1= P(T_1,K_c)
     #projection matrices 2
     P2= P(T_21_1,K_c)
