@@ -228,10 +228,11 @@ def homography_matrix(x1,x2):
 
 #compute point transfer 
 def point_transfer(H,x1):
-    pts=np.zeros((2,x1.shape[1]))
+    pts=np.zeros((x1.shape[1],2))
     for i in range(x1.shape[1]):
         pt=H@x1[:,i]
-        pts[:,i]=pt[:2]/pt[-1]
+        pts[i]=pt[:2]/pt[-1]
+    print(pts)
     return pts
 
 if __name__ == '__main__':
@@ -477,9 +478,11 @@ if __name__ == '__main__':
     ####################################
     #Homographies(3.1)##################
     ####################################
-    d=1.7257
-    n=np.array([0.0149,0.9483,0.3171])
-    H=K_c@(R_90_min-t@n.T*(1./d))@np.linalg.inv(K_c)
+    Pi_1= np.loadtxt("data/Pi_1.txt")
+    d=Pi_1[3]
+    n=Pi_1[:3]
+    H=K_c@(R_90_min-(t[:,np.newaxis]@n[:,np.newaxis].T)*(1./d))@np.linalg.inv(K_c)
+    
     print("Exercise 3.1")
     print("H=",H)
     ####################################
@@ -500,7 +503,7 @@ if __name__ == '__main__':
     plt.plot(x2[0, :], x2[1, :],'rx', markersize=10)
     plotNumberedImagePoints(x2, 'r', (10,0)) # For plotting with numbers (choose one of the both options)
     plotNumberedImagePoints(x1_, 'g', (10,0))
-    plt.plot(x1_[0, :], x1_[1, :],'gx', markersize=10)
+    plt.plot(x1_[:,0], x1_[ :,1],'gx', markersize=10)
     plt.title('Image 2')
     plt.draw()  # We update the figure display
     print('Click in the image to continue...')
